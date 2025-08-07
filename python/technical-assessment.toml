@@ -1,9 +1,0 @@
-[project]
-name = "technical_assessment"
-version = "0.1.0"
-description = "Technical Assessment"
-dependencies = ["requests"]
-
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
