@@ -5,17 +5,38 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+/**
+ * This class simulates a simple model for creating "People" and managing them through a "BirthingUnit".
+ */
 public class CodeToReview {
-    
+
+    /**
+     * Represents a person with a name and date of DOB.
+     */
     public static class People {
-        private static final OffsetDateTime Under16 = OffsetDateTime.now().minusYears(15);
+    
+        // Default DOB for under-16 logic (15 years ago from now)
+        private static final OffsetDateTime UNDER_16 = OffsetDateTime.now().minusYears(15);
+
         private String name;
         private OffsetDateTime dob;
 
+        /**
+         * Creates a person assumed to be under 16 using default DOB.
+         * 
+         * @param name Name of the person
+         */
         public People(String name) {
-            this(name, Under16.toLocalDateTime());
+            this(name, UNDER_16.toLocalDateTime());
         }
 
+        /**
+         * Creates a person with a name and specific DOB.
+         * Converts LocalDateTime to OffsetDateTime using system offset.
+         * 
+         * @param name Name of the person
+         * @param dob Date of birth
+         */
         public People(String name, LocalDateTime dob) {
             this.name = name;
             this.dob = dob.atOffset(OffsetDateTime.now().getOffset());
@@ -30,10 +51,11 @@ public class CodeToReview {
         }
     }
 
+    /**
+     * Simulates a "Birthing Unit" that manages people creation and querying.
+     */
     public static class BirthingUnit {
-        /**
-         * MaxItemsToRetrieve
-         */
+
         private List<People> people;
 
         public BirthingUnit() {
@@ -41,50 +63,68 @@ public class CodeToReview {
         }
 
         /**
-         * GetPeoples
-         * @param j
-         * @return List<Object>
+         * Generates and returns a list of randomly created "People".
+         * Names are randomly "Bob" or "Betty", and DOBs are randomized to simulate age between 18 to 85.
+         *
+         * @param count Number of people to create
+         * @return List of People objects
          */
-        public List<People> getPeople(int i) {
-            for (int j = 0; j < i; j++) {
+        public List<People> getPeople(int count) {
+            Random random = new Random();  // Create the random generator once
+
+            for (int j = 0; j < count; j++) {
                 try {
-                    // Creates a dandon Name
-                    String name = "";
-                    Random random = new Random();
-                    if (random.nextInt(2) == 0) {
-                        name = "Bob";
-                    } else {
-                        name = "Betty";
-                    }
-                    // Adds new people to the list
-                    people.add(new People(name, LocalDateTime.now().minusDays(random.nextInt(18, 85) * 365)));
+                    // Randomly assign the name "Bob" or "Betty"
+                    String name = random.nextInt(2) == 0 ? "Bob" : "Betty";
+
+                    // Random age between 18 and 85 years
+                    int ageInYears = 18 + random.nextInt(68); // 85 - 18 = 67 + 1
+                    LocalDateTime dob = LocalDateTime.now().minusDays(ageInYears * 365L);
+
+                    // Add new person to the list
+                    people.add(new People(name, dob));
                 } catch (Exception e) {
-                    // Dont think this should ever happen
-                    throw new RuntimeException("Something failed in user creation");
+                    // Unlikely to happen, but we fail fast with meaningful error
+                    throw new RuntimeException("Something failed in user creation", e);
                 }
             }
+
             return people;
         }
 
+        /**
+         * Filters the list of "Bob"s, optionally filtering by age (>30).
+         *
+         * @param olderThan30 If true, only returns Bobs older than 30.
+         * @return List of Bobs meeting the condition
+         */
         private List<People> getBobs(boolean olderThan30) {
-            return olderThan30 
-                ? people.stream()
-                    .filter(x -> "Bob".equals(x.getName()) && 
-                        x.getDob().isAfter(OffsetDateTime.now().minusYears(30)))
-                    .collect(Collectors.toList())
-                : people.stream()
-                    .filter(x -> "Bob".equals(x.getName()))
-                    .collect(Collectors.toList());
+            OffsetDateTime cutoff = OffsetDateTime.now().minusYears(30);
+
+            return people.stream()
+                .filter(p -> "Bob".equals(p.getName()))
+                .filter(p -> !olderThan30 || p.getDob().isBefore(cutoff))
+                .collect(Collectors.toList());
         }
 
+        /**
+         * Combines a person's name with a last name to simulate marriage name.
+         * Ignores last names containing "test"
+         * Truncates the result if it exceeds 255 characters
+         *
+         * @param p        The person
+         * @param lastName The new last name
+         *
+         * @return Combined name
+         */
         public String getMarried(People p, String lastName) {
-            if (lastName.contains("test"))
-                return p.getName();
-            if ((p.getName().length() + lastName.length()) > 255) {
-                return (p.getName() + " " + lastName).substring(0, 255);
+            if (lastName.contains("test")) {
+                return p.getName(); // Ignore test names
             }
 
-            return p.getName() + " " + lastName;
+            String fullName = p.getName() + " " + lastName;
+
+            return fullName.length() > 255 ? fullName.substring(0, 255) : fullName;
         }
     }
 }
