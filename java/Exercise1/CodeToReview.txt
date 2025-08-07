@@ -43,13 +43,13 @@ public class CodeToReview {
             people = new ArrayList<>();
         }
 
-        //Spelling: “GetPeoples” -> "getPeople"
+        //Spelling: "GetPeoples" -> "getPeople"
         //Incorrect @param: method uses i, not j
         //Wrong return type in doc: List<Object> -> List<People>
         //"Bob" and "Betty" hardcoded and duplicated in other places, please consider using enum or constants
         
         //Also method violates Single Responsibility Principle
-        //Too many responsibilities — hard to test, reuse, or change independently
+        //Too many responsibilities -> hard to test, reuse, or change independently
         /**
          * GetPeoples
          * @param j
@@ -62,7 +62,7 @@ public class CodeToReview {
             	//Catching all exceptions and rethrowing hides the actual issue and stack trace
             	//Please consider removing the try-catch or catch specific exceptions and include e, like throw new RuntimeException("...", e);
                 try {
-                	//Likely a typo: “dandon” -> "random"
+                	//Likely a typo: "dandon" -> "random"
                     // Creates a dandon Name
                     String name = "";
                     //Creating a new Random instance inside a loop can affect performance and randomness quality (especially in fast iterations).
