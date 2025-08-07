@@ -5,38 +5,20 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-/**
- * This class simulates a simple model for creating "People" and managing them through a "BirthingUnit".
- */
+//Please add comments to briefly describe the function / purpose of the class
 public class CodeToReview {
-
-    /**
-     * Represents a person with a name and date of DOB.
-     */
+	
+    //Looks bad naming ("People" -> plural class name) - please rename to 'Person'
     public static class People {
-    
-        // Default DOB for under-16 logic (15 years ago from now)
-        private static final OffsetDateTime UNDER_16 = OffsetDateTime.now().minusYears(15);
-
+    	//The use of OffsetDateTime.now() directly in field initialization may cause inconsistency if called multiple times in rapid succession.
+        private static final OffsetDateTime Under16 = OffsetDateTime.now().minusYears(15);
         private String name;
         private OffsetDateTime dob;
 
-        /**
-         * Creates a person assumed to be under 16 using default DOB.
-         * 
-         * @param name Name of the person
-         */
         public People(String name) {
-            this(name, UNDER_16.toLocalDateTime());
+            this(name, Under16.toLocalDateTime());
         }
 
-        /**
-         * Creates a person with a name and specific DOB.
-         * Converts LocalDateTime to OffsetDateTime using system offset.
-         * 
-         * @param name Name of the person
-         * @param dob Date of birth
-         */
         public People(String name, LocalDateTime dob) {
             this.name = name;
             this.dob = dob.atOffset(OffsetDateTime.now().getOffset());
@@ -51,80 +33,99 @@ public class CodeToReview {
         }
     }
 
-    /**
-     * Simulates a "Birthing Unit" that manages people creation and querying.
-     */
     public static class BirthingUnit {
-
+        /**
+         * MaxItemsToRetrieve
+         */
         private List<People> people;
 
         public BirthingUnit() {
             people = new ArrayList<>();
         }
 
+        //Spelling: “GetPeoples” -> "getPeople"
+        //Incorrect @param: method uses i, not j
+        //Wrong return type in doc: List<Object> -> List<People>
+        //"Bob" and "Betty" hardcoded and duplicated in other places, please consider using enum or constants
+        
+        //Also method violates Single Responsibility Principle
+        //Too many responsibilities — hard to test, reuse, or change independently
         /**
-         * Generates and returns a list of randomly created "People".
-         * Names are randomly "Bob" or "Betty", and DOBs are randomized to simulate age between 18 to 85.
-         *
-         * @param count Number of people to create
-         * @return List of People objects
+         * GetPeoples
+         * @param j
+         * @return List<Object>
          */
-        public List<People> getPeople(int count) {
-            Random random = new Random();  // Create the random generator once
-
-            for (int j = 0; j < count; j++) {
+        
+        public List<People> getPeople(int i) {
+            for (int j = 0; j < i; j++) {
+            	//The code inside doesn't throw any checked exceptions. 
+            	//Catching all exceptions and rethrowing hides the actual issue and stack trace
+            	//Please consider removing the try-catch or catch specific exceptions and include e, like throw new RuntimeException("...", e);
                 try {
-                    // Randomly assign the name "Bob" or "Betty"
-                    String name = random.nextInt(2) == 0 ? "Bob" : "Betty";
-
-                    // Random age between 18 and 85 years
-                    int ageInYears = 18 + random.nextInt(68); // 85 - 18 = 67 + 1
-                    LocalDateTime dob = LocalDateTime.now().minusDays(ageInYears * 365L);
-
-                    // Add new person to the list
-                    people.add(new People(name, dob));
+                	//Likely a typo: “dandon” -> "random"
+                    // Creates a dandon Name
+                    String name = "";
+                    //Creating a new Random instance inside a loop can affect performance and randomness quality (especially in fast iterations).
+                    //Please declare Random once at the class or method level and reuse it
+                    Random random = new Random();
+                    if (random.nextInt(2) == 0) {
+                        name = "Bob";
+                    } else {
+                        name = "Betty";
+                    }
+                    //Please consider using constant for the magic number 18, 85, 365
+                    // Adds new people to the list
+                    people.add(new People(name, LocalDateTime.now().minusDays(random.nextInt(18, 85) * 365)));
                 } catch (Exception e) {
-                    // Unlikely to happen, but we fail fast with meaningful error
-                    throw new RuntimeException("Something failed in user creation", e);
+                	//Generic error with no stack trace preserved. Consider using: throw new RuntimeException("...", e);
+                    // Dont think this should ever happen
+                    throw new RuntimeException("Something failed in user creation");
                 }
             }
-
             return people;
         }
 
-        /**
-         * Filters the list of "Bob"s, optionally filtering by age (>30).
-         *
-         * @param olderThan30 If true, only returns Bobs older than 30.
-         * @return List of Bobs meeting the condition
-         */
+        //Looks logical bug? This condition filters younger than 30, which contradicts the method argument olderThan30
         private List<People> getBobs(boolean olderThan30) {
-            OffsetDateTime cutoff = OffsetDateTime.now().minusYears(30);
-
-            return people.stream()
-                .filter(p -> "Bob".equals(p.getName()))
-                .filter(p -> !olderThan30 || p.getDob().isBefore(cutoff))
-                .collect(Collectors.toList());
+            return olderThan30 
+                ? people.stream()
+                    .filter(x -> "Bob".equals(x.getName()) && 
+                        x.getDob().isAfter(OffsetDateTime.now().minusYears(30)))
+                    .collect(Collectors.toList())
+                : people.stream()
+                    .filter(x -> "Bob".equals(x.getName()))
+                    .collect(Collectors.toList());
         }
 
-        /**
-         * Combines a person's name with a last name to simulate marriage name.
-         * Ignores last names containing "test"
-         * Truncates the result if it exceeds 255 characters
-         *
-         * @param p        The person
-         * @param lastName The new last name
-         *
-         * @return Combined name
-         */
+        //"test" check on lastName seems arbitrary, please do some explanation
+        //Potentially unsafe if lastName is null - would throw NPE
+        //Truncation logic is sound but would benefit from a constant MAX_NAME_LENGTH
         public String getMarried(People p, String lastName) {
-            if (lastName.contains("test")) {
-                return p.getName(); // Ignore test names
+            if (lastName.contains("test"))
+                return p.getName();
+            if ((p.getName().length() + lastName.length()) > 255) {
+                return (p.getName() + " " + lastName).substring(0, 255);
             }
 
-            String fullName = p.getName() + " " + lastName;
-
-            return fullName.length() > 255 ? fullName.substring(0, 255) : fullName;
+            return p.getName() + " " + lastName;
         }
     }
 }
+
+/**
+Most Concerning Code Smell:
+	* Misleading business logic in getBobs(boolean olderThan30)
+	  	The filtering logic is reversed. This creates high risk of incorrect business decisions or data processing outcomes.
+	  	If olderThan30 == true, it currently returns people younger than 30, which contradicts the method name and argument intent.
+	* Lack of Validation: i being negative in getPeople(int i); lastName being null in getMarried(...) and name being null in People(...)
+	  	Consequence: Code may throw unexpected NullPointerExceptions
+	
+Questions for the Original Author
+	Intended age range? Is the age filter in getBobs meant to return people older or younger than 30?
+
+	What is the purpose of the lastName.contains("test") check? Is this for mock/test data? If so, should it be removed in production?
+
+	Why default to 15 years old in the People(String name) constructor? Is that a business requirement or placeholder?
+
+	Is the DOB randomization (via minusDays(random...)) meant to simulate realistic birth dates? If so, should this logic be more explicit and testable?
+*/
