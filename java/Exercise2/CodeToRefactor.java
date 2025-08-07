@@ -9,7 +9,10 @@ import java.util.stream.Collectors;
 /**
  * Refactored version of the original CodeToRefactor.
  */
-public class RefactoredPeopleManager {
+public class CodeToRefactor {
+	
+	private static final String nameBob = "Bob";
+	private static final String nameBetty = "Betty";
 
     /**
      * Represents a person with name and date of birth.
@@ -50,7 +53,7 @@ public class RefactoredPeopleManager {
         private static final int MIN_AGE = 18;
         private static final int MAX_AGE = 85;
 
-        private final List<Person> people = new ArrayList<>();
+        private final List<Person> peopleList = new ArrayList<>();
         private final Random random = new Random();
 
         /**
@@ -61,13 +64,13 @@ public class RefactoredPeopleManager {
          */
         public List<Person> generatePeople(int count) {
             for (int i = 0; i < count; i++) {
-                String name = random.nextBoolean() ? "Bob" : "Betty";
+                String name = random.nextBoolean() ? nameBob : nameBetty;
                 int age = MIN_AGE + random.nextInt(MAX_AGE - MIN_AGE + 1);
                 LocalDateTime dob = LocalDateTime.now().minusYears(age);
 
-                people.add(new Person(name, dob));
+                peopleList.add(new Person(name, dob));
             }
-            return new ArrayList<>(people);
+            return new ArrayList<>(peopleList);
         }
 
         /**
@@ -78,8 +81,8 @@ public class RefactoredPeopleManager {
          */
         public List<Person> getBobs(boolean onlyOlderThan30) {
             OffsetDateTime thirtyYearsAgo = OffsetDateTime.now().minusYears(30);
-            return people.stream()
-                    .filter(p -> "Bob".equals(p.getName()))
+            return peopleList.stream()
+                    .filter(p -> nameBob.equals(p.getName()))
                     .filter(p -> !onlyOlderThan30 || p.getDob().isBefore(thirtyYearsAgo))
                     .collect(Collectors.toList());
         }
