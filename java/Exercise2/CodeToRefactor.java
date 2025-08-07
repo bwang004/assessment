@@ -1,24 +1,32 @@
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-public class CodeToRefactor {
-    
-    public static class People {
-        private static final OffsetDateTime Under16 = OffsetDateTime.now().minusYears(15);
-        private String name;
-        private OffsetDateTime dob;
+/**
+ * Refactored version of the original CodeToRefactor.
+ */
+public class RefactoredPeopleManager {
 
-        public People(String name) {
-            this(name, Under16.toLocalDateTime());
+    /**
+     * Represents a person with name and date of birth.
+     */
+    public static class Person {
+        private static final OffsetDateTime DEFAULT_UNDER_16_DOB = OffsetDateTime.now().minusYears(15);
+
+        private final String name;
+        private final OffsetDateTime dob;
+
+        public Person(String name) {
+            this(name, DEFAULT_UNDER_16_DOB.toLocalDateTime());
         }
 
-        public People(String name, LocalDateTime dob) {
+        public Person(String name, LocalDateTime dob) {
             this.name = name;
-            this.dob = dob.atOffset(OffsetDateTime.now().getOffset());
+            this.dob = dob.atOffset(ZoneOffset.systemDefault().getRules().getOffset(LocalDateTime.now()));
         }
 
         public String getName() {
@@ -28,63 +36,70 @@ public class CodeToRefactor {
         public OffsetDateTime getDob() {
             return dob;
         }
+
+        public int getAgeInYears() {
+            return OffsetDateTime.now().getYear() - dob.getYear();
+        }
     }
 
+    /**
+     * Factory class responsible for managing a list of people.
+     */
     public static class BirthingUnit {
-        /**
-         * MaxItemsToRetrieve
-         */
-        private List<People> people;
+        private static final int MAX_NAME_LENGTH = 255;
+        private static final int MIN_AGE = 18;
+        private static final int MAX_AGE = 85;
 
-        public BirthingUnit() {
-            people = new ArrayList<>();
-        }
+        private final List<Person> people = new ArrayList<>();
+        private final Random random = new Random();
 
         /**
-         * GetPeoples
-         * @param j
-         * @return List<Object>
+         * Generates and adds `count` random people (either Bob or Betty).
+         * 
+         * @param count Number of people to generate
+         * @return List of all generated people
          */
-        public List<People> getPeople(int i) {
-            for (int j = 0; j < i; j++) {
-                try {
-                    // Creates a dandon Name
-                    String name = "";
-                    Random random = new Random();
-                    if (random.nextInt(2) == 0) {
-                        name = "Bob";
-                    } else {
-                        name = "Betty";
-                    }
-                    // Adds new people to the list
-                    people.add(new People(name, LocalDateTime.now().minusDays(random.nextInt(18, 85) * 365)));
-                } catch (Exception e) {
-                    // Dont think this should ever happen
-                    throw new RuntimeException("Something failed in user creation");
-                }
+        public List<Person> generatePeople(int count) {
+            for (int i = 0; i < count; i++) {
+                String name = random.nextBoolean() ? "Bob" : "Betty";
+                int age = MIN_AGE + random.nextInt(MAX_AGE - MIN_AGE + 1);
+                LocalDateTime dob = LocalDateTime.now().minusYears(age);
+
+                people.add(new Person(name, dob));
             }
-            return people;
+            return new ArrayList<>(people);
         }
 
-        private List<People> getBobs(boolean olderThan30) {
-            return olderThan30 
-                ? people.stream()
-                    .filter(x -> "Bob".equals(x.getName()) && 
-                        x.getDob().isAfter(OffsetDateTime.now().minusYears(30)))
-                    .collect(Collectors.toList())
-                : people.stream()
-                    .filter(x -> "Bob".equals(x.getName()))
+        /**
+         * Returns a filtered list of people named "Bob".
+         * 
+         * @param onlyOlderThan30 If true, filter only Bobs older than 30
+         * @return List of Bobs meeting the condition
+         */
+        public List<Person> getBobs(boolean onlyOlderThan30) {
+            OffsetDateTime thirtyYearsAgo = OffsetDateTime.now().minusYears(30);
+            return people.stream()
+                    .filter(p -> "Bob".equals(p.getName()))
+                    .filter(p -> !onlyOlderThan30 || p.getDob().isBefore(thirtyYearsAgo))
                     .collect(Collectors.toList());
         }
 
-        public String getMarried(People p, String lastName) {
-            if (lastName.contains("test"))
-                return p.getName();
-            if ((p.getName().length() + lastName.length()) > 255) {
-                return (p.getName() + " " + lastName).substring(0, 255);
+        /**
+         * Simulates marriage by combining first and last names.
+         * Skips test data and truncates if the name is too long.
+         * 
+         * @param person Person to "marry"
+         * @param lastName Last name to append
+         * 
+         * @return Full name
+         */
+        public String getMarriedName(Person person, String lastName) {
+            if (lastName == null || lastName.contains("test")) {
+                return person.getName();
             }
 
-            return p.getName() + " " + lastName;
+            String fullName = person.getName() + " " + lastName;
+            return fullName.length() > MAX_NAME_LENGTH ? fullName.substring(0, MAX_NAME_LENGTH) : fullName;
         }
     }
 }
