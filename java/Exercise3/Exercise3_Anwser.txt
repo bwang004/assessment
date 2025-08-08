@@ -11,35 +11,35 @@
 		Follow Clean Architecture principles: separation of concerns by domain, application, and infrastructure.
 		
 		clean-green-fields/
-		│
-		├── domain/                # Core entities and business rules
-		│   └── src/main/java/
-		│       └── com.cgfp.domain/
-		│           ├── Card.java
-		│           ├── Deck.java
-		│           └── Suit.java, Rank.java
-		│
-		├── application/           # Use cases / game logic
-		│   └── src/main/java/
-		│       └── com.cgfp.application/
-		│           ├── GameService.java
-		│           └── ShuffleService.java
-		│
-		├── infrastructure/        # CLI/GUI/Jenkins later
-		│   └── src/main/java/
-		│       └── com.cgfp.infrastructure/
-		│           └── ConsoleApp.java
-		│
-		├── tests/                 # Test module
-		│   └── src/test/java/
-		│       └── com.cgfp.tests/
-		│           ├── DeckTest.java
-		│           └── GameServiceTest.java
-		│
-		└── pom.xml                # Maven configuration
+		|
+		|-- domain/                # Core entities and business rules
+		|   |-- src/main/java/
+		|       |-- com.cgfp.domain/
+		|           |-- Card.java
+		|           |-- Deck.java
+		|           |-- Suit.java, Rank.java
+		|
+		|-- application/           # Use cases / game logic
+		|   |-- src/main/java/
+		|       |-- com.cgfp.application/
+		|           |-- GameService.java
+		|           |-- ShuffleService.java
+		|
+		|-- infrastructure/        # CLI/GUI/Jenkins later
+		|   |-- src/main/java/
+		|       |-- com.cgfp.infrastructure/
+		|           |-- ConsoleApp.java
+		|
+		|-- tests/                 # Test module
+		|   |-- src/test/java/
+		|       |-- com.cgfp.tests/
+		|           |-- DeckTest.java
+		|           |-- GameServiceTest.java
+		|
+		|-- pom.xml                # Maven configuration
 
 2. Delivery Pipeline (CI/CD)
-	To build consistently across environments, packaging artifact (e.g., JAR) for delivery, and/or auto-deploy if expanded later (to a UI or API),
+	To build consistently across environments, packaging artifact (e.g. JAR) for delivery, and/or auto-deploy if expanded later (to a UI or API),
 	The CI/CD (e.g., Jenkins, GitHub) pipeline might look like:
 	* Checkout Code: checkout scm
 	* Set up Java & Maven Environment: 
@@ -145,7 +145,7 @@ public class Deck {
 	* Refactor the code while ensuring all tests still pass.
 	* Repeat the cycle for each new piece of functionality.
 
-6. Constraints, Biases, and Assumptions
+6. Constraints and Assumptions
 	Constraints:
 		* No UI choice made yet: Start with console-based
 		* Card game rules TBD: Keep it general for now
