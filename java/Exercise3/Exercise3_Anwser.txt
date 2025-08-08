@@ -1,0 +1,164 @@
+1. Initial To-Do List with Reasoning
+	Development Environment Setup
+		Install Java 17 or higher (stable version)
+		Install Maven
+		Install Git
+		Choose IDE: IntelliJ, Eclipse, Visual Studio or VSCode
+		Set up JUnit 5 for testing
+		Initialize a GitHub repo with .gitignore and a README.md
+		
+	Scaffold / Project Structure
+		Follow Clean Architecture principles: separation of concerns by domain, application, and infrastructure.
+		
+		clean-green-fields/
+		│
+		├── domain/                # Core entities and business rules
+		│   └── src/main/java/
+		│       └── com.cgfp.domain/
+		│           ├── Card.java
+		│           ├── Deck.java
+		│           └── Suit.java, Rank.java
+		│
+		├── application/           # Use cases / game logic
+		│   └── src/main/java/
+		│       └── com.cgfp.application/
+		│           ├── GameService.java
+		│           └── ShuffleService.java
+		│
+		├── infrastructure/        # CLI/GUI/Jenkins later
+		│   └── src/main/java/
+		│       └── com.cgfp.infrastructure/
+		│           └── ConsoleApp.java
+		│
+		├── tests/                 # Test module
+		│   └── src/test/java/
+		│       └── com.cgfp.tests/
+		│           ├── DeckTest.java
+		│           └── GameServiceTest.java
+		│
+		└── pom.xml                # Maven configuration
+
+2. Delivery Pipeline (CI/CD)
+	To build consistently across environments, packaging artifact (e.g., JAR) for delivery, and/or auto-deploy if expanded later (to a UI or API),
+	The CI/CD (e.g., Jenkins, GitHub) pipeline might look like:
+	* Checkout Code: checkout scm
+	* Set up Java & Maven Environment: 
+		tools {
+			jdk 'jdk17'
+			maven 'maven3.9'
+		}
+	* Build & Compile: 
+		mvn clean install
+	* Run Unit Tests (It ensures reliable delivery as every commit gives confidence via tests)
+		mvn test
+	* Package Artifact:
+		mvn package
+	* Deploy (optinal):
+		mvn deploy
+	* Later enhancement could be:
+		- Adding in API tests (if exposing endpoints), integration tests	
+		- Release version tagging
+	
+		
+3. Sample Domain Model Classes:
+
+// domain/model/Card.java
+public class Card {
+    private final String suit;
+    private final String rank;
+
+    public Card(String rank, String suit) {
+        this.rank = rank;
+        this.suit = suit;
+    }
+
+    public String toString() {
+        return rank + " of " + suit;
+    }
+}
+
+// domain/model/Deck.java
+public class Deck {
+    private final List<Card> cards;
+
+    public Deck() {
+        this.cards = new ArrayList<>();
+        String[] suits = {"Hearts", "Diamonds", "Clubs", "Spades"};
+        String[] ranks = {"2", "3", ..., "Ace"}; // add all ranks
+        for (String suit : suits) {
+            for (String rank : ranks) {
+                cards.add(new Card(rank, suit));
+            }
+        }
+    }
+
+    public void shuffle() {
+        Collections.shuffle(cards);
+    }
+
+    public Card draw() {
+        return cards.remove(0);
+    }
+}
+
+4. Architecture Decision Record (ADR)
+	Decision: Use Clean Architecture (layered modules: domain, application, infrastructure)
+	
+	Why chosen:
+		* Clean separation of game rules from UI/infrastructure
+			- Its in domain layer: These are the pure business rules — the logic that defines how cards, decks, and gameplay work (For example: A deck has 52 cards; You can shuffle a deck).
+			- UI (Infrastructure layer): This is how the game interacts with the player — e.g., via: Console (System.out.println in Java), Swing/JavaFX GUI, Web, Mobile app
+		* Easier testing and future scalability
+			- Can replace the UI without touching the rules.
+			- The game logic remains testable without simulating a user interface.
+		
+	Surprises / Learnings:
+		* Abstracting "shuffle" and "game rules" early helps future-proof
+			- As we might want different shuffle styles (e.g., Fisher–Yates, overhand shuffle simulation, casino riffle shuffle). Or might want replayability — re-running the same game sequence.
+
+			If shuffle is abstracted early:
+			
+			public interface Shuffler {
+				void shuffle(List<Card> cards);
+			}
+
+			public class RandomShuffler implements Shuffler {
+				@Override
+				public void shuffle(List<Card> cards) {
+					Collections.shuffle(cards);
+				}
+			}
+
+			Then Deck doesn’t care how it’s shuffled — it just uses whatever Shuffler you give it.
+			And future-proof benefit: Changing shuffle logic later doesn’t require rewriting game logic — you just plug in a new implementation.
+
+5. TDD Process:
+	The principles are mostly:
+	* Decompose Problems: Break down large problems into small, testable behaviors. For example: Instead of "implement a card game," start with "a Card has a suit and rank," then "a Deck can shuffle cards," etc.
+	* Testability: Write code that is decoupled, modular, and interface-driven so that it is testable. For example, inject a Shuffler interface instead of hardcoding Collections.shuffle().
+	* Refactor Safely: Improve structure, naming, and logic without fear of breaking things, because tests ensure its safe.
+	* Work Incrementally: Implement functionality in small steps, verifying correctness at each point.
+	
+	So will go through the steps:
+	* Write a failing test that defines a new functionality or behavior.
+	* Write the minimal amount of code to make the test pass.
+	* Refactor the code while ensuring all tests still pass.
+	* Repeat the cycle for each new piece of functionality.
+
+6. Constraints, Biases, and Assumptions
+	Constraints:
+		* No UI choice made yet: Start with console-based
+		* Card game rules TBD: Keep it general for now
+
+	Assumptions:
+		* Standard 52-card deck
+		* One human vs. computer player
+		
+7. Next Steps
+	* Implement Deck, Card, GameService
+	* Write unit tests (TDD) for Deck & shuffling
+	* Add a console CLI runner
+	* Create Jenkins pipeline (build + test)
+	* Decide on the card game rules
+
+	
